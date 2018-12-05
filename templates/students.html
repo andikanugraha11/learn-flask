@@ -1,0 +1,11 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+    <br/>
+    <h1>Student</h1>
+    <ul class="list-group">
+        {% for student in students %}
+            <li class="list-group-item"><a href="student/{{student.id}}">{{student.name}}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}
