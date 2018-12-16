@@ -2,6 +2,7 @@ from flask import Flask, render_template, flash, redirect, url_for, request, ses
 from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
+from functools import wraps
 
 from data import Students
 
@@ -71,6 +72,17 @@ def register():
         return redirect(url_for('home'))
     return render_template('register.html', form=form)
 
+# login wraps check
+def is_login(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'login' in session:
+            return f(*args, **kwargs)
+        else:
+            flash('Unauthorize, Please login', 'danger')
+            return redirect(url_for('login'))
+    return wrap
+
 # User Login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -89,7 +101,7 @@ def login():
             # compare password
             if sha256_crypt.verify(password_candidate, password):
                 # pass
-                session['loggin'] = True
+                session['login'] = True
                 session['username'] = username
 
                 flash("You're now logged in", "success")
@@ -103,6 +115,17 @@ def login():
              return render_template('login.html', error=error)
 
     return render_template('login.html')
+
+@app.route("/dashboard")
+@is_login
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("You're now logged out","success")
+    return redirect(url_for("login"))
 
 if __name__ == '__main__':
     app.secret_key='secret121'
