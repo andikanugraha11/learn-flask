@@ -32,11 +32,31 @@ def about():
 
 @app.route("/student")
 def students():
-    return render_template('students.html', students= Students)
+    cur = mysql.connection.cursor()
+
+    result = cur.execute("SELECT * FROM students")
+
+    students = cur.fetchall()
+
+    if result > 0:
+        return render_template('students.html', students= students)
+        # return render_template('dashboard.html', students=Students)
+    else :
+        msg = "No student found"
+        return render_template('students.html', msg=msg)
+    cur.close()
+    
 
 @app.route("/student/<string:id>")
 def student(id):
-    return render_template('student.html', id=id)
+
+    cur = mysql.connection.cursor()
+
+    cur.execute("SELECT * FROM students WHERE id = %s",[id])
+
+    student = cur.fetchone()
+
+    return render_template('student.html', student =student)
 
 # Register Form
 class RegisterForm(Form):
@@ -48,6 +68,12 @@ class RegisterForm(Form):
         validators.EqualTo('passConfirm', message='Password do not  match')
     ])
     passConfirm = PasswordField('Confirm Password')
+
+# Add Student Form
+class StudentForm(Form):
+    name = StringField('Name', [validators.Length(min=1, max=50)])
+    npm = StringField('Npm', [validators.Length(min=4, max=8)])
+    sClass = StringField('Class', [validators.Length(min=4, max=6)])
 
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -97,12 +123,13 @@ def login():
         if result > 0 :
             data = cur.fetchone()
             password = data['password']
-
+            userId = data['id']
             # compare password
             if sha256_crypt.verify(password_candidate, password):
                 # pass
                 session['login'] = True
                 session['username'] = username
+                session['userId'] = userId
 
                 flash("You're now logged in", "success")
                 return redirect(url_for('dashboard'))
@@ -119,7 +146,45 @@ def login():
 @app.route("/dashboard")
 @is_login
 def dashboard():
-    return render_template('dashboard.html')
+
+    cur = mysql.connection.cursor()
+
+    result = cur.execute("SELECT * FROM students")
+
+    students = cur.fetchall()
+
+    if result > 0:
+        return render_template('dashboard.html', students=students)
+    else :
+        msg = "No student found"
+        return render_template('dashboard.html', msg=msg)
+    
+    cur.close()
+
+@app.route('/add_student', methods=['GET','POST'])
+@is_login
+def addStudent():
+    form = StudentForm(request.form)
+    if request.method == 'POST' and form.validate():
+        name = form.name.data
+        npm = form.npm.data
+        sClass = form.sClass.data
+        create_by = session['userId']
+
+        # create cursor
+        cur = mysql.connection.cursor()
+        cur.execute("INSERT INTO students(name,npm,class,create_by) VALUES(%s,%s,%s,%s)", (name,npm,sClass,create_by))
+
+        # commit to DB
+        mysql.connection.commit()
+
+        # close connection
+        cur.close()
+
+        flash("Student added", "success")
+        return redirect(url_for('dashboard'))
+    
+    return render_template('add_student.html', form=form)
 
 @app.route("/logout")
 def logout():

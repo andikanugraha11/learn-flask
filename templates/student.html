@@ -1,6 +1,17 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-    <h1>Student</h1>
-    <h3>{{id}}</h3>
+    <h1>Student info</h1>
+    <table class="table">
+        <tr>
+            <th>Name</th>
+            <th>NPM</th>
+            <th>Class</th>
+        </tr>
+        <tr>
+            <td>{{student.name}}</td>
+            <td>{{student.npm}}</td>
+            <td>{{student.class}}</td>
+        </tr>
+    </table>
 {% endblock %}

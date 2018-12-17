@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+    <h1>Add Student</h1>
+    {% from "includes/_formhelper.html" import render_field %}
+    <form action="" method="POST">
+        <div class="form-group">
+            {{render_field(form.name, class="form-control")}}
+        </div>
+        <div class="form-group">
+            {{render_field(form.npm, class="form-control")}}
+        </div>
+        <div class="form-group">
+            {{render_field(form.sClass, class="form-control")}}
+        </div>
+        <p><input type="submit" class="btn btn-primary" value="Add"></p>
+    </form>
+{% endblock %}
