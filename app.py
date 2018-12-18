@@ -186,6 +186,57 @@ def addStudent():
     
     return render_template('add_student.html', form=form)
 
+
+@app.route('/edit_student/<string:id>', methods=['GET','POST'])
+@is_login
+def editStudent(id):
+   
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM students WHERE id=%s", [id])
+    student = cur.fetchone()
+
+    form = StudentForm(request.form)
+
+    form.name.data = student['name']
+    form.npm.data = student['npm']
+    form.sClass.data =  student['class']
+
+    if request.method == 'POST' and form.validate():
+        name = request.form['name']
+        npm = request.form['npm']
+        sClass = request.form['sClass']
+        # create_by = session['userId']
+
+        # create cursor
+        cur = mysql.connection.cursor()
+        cur.execute("UPDATE students SET name=%s, npm=%s, class=%s WHERE id=%s", (name,npm,sClass,id))
+
+        # commit to DB
+        mysql.connection.commit()
+
+        # close connection
+        cur.close()
+
+        flash("Student updated", "success")
+        return redirect(url_for('dashboard'))
+    
+    return render_template('edit_student.html', form=form)
+
+@app.route("/delete_student/<string:id>", methods=['POST'])
+@is_login
+def deleteStudent(id):
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM students WHERE id=%s", [id])
+
+    # commit to DB
+    mysql.connection.commit()
+
+    # close connection
+    cur.close()
+
+    flash("Student deleted", "success")
+    return redirect(url_for('dashboard'))
+
 @app.route("/logout")
 def logout():
     session.clear()
